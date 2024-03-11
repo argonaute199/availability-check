@@ -1,0 +1,110 @@
+blueprint:
+  name: Entity check
+  description: Test de la disponibilité d'une entité Home Assistant
+  domain: automation
+  source_url: https://github.com/argonaute199/availability_check/availability_check.yaml
+
+
+  # Entrées du blueprint
+  input:
+    time1:
+      name: Heure 1
+      description: Heure 1 de test  ( pas d'éxécution si "00:00")
+      default: '10:00:00'
+      selector:
+        time: {}
+    time2:
+      name: Heure 2
+      description: Heure 2 de test ( pas d'éxécution si "00:00")
+      default: '00:00:00'
+      selector:
+        time: {}
+    time3:
+      name: Heure 3
+      description: Heure 3 de test ( pas d'éxécution si "00:00")
+      default: '00:00:00'
+      selector:
+        time: {}
+    time4:
+      name: Heure 4
+      description: Heure 4 de test ( pas d'éxécution si "00:00")
+      default: '00:00:00'
+      selector:
+        time: {}
+    time5:
+      name: Heure 5
+      description: Heure 5 de test  ( pas d'éxécution si "00:00")
+      default: '00:00:00'
+      selector:
+        time: {}
+
+    selector:
+      name: Filtre sur les entités
+      description: Expression de selection des entités à tester
+      default: ""
+
+    exclude:
+      name: Entités à exclure
+      description: Liste des entités à exclure
+      default: {}
+      selector:
+        target:
+        
+    actions:
+      name: Actions
+      description: Notifications ou autre à exécuter. {{entities}} dans message sera remplacé par la liste des entités non disponibles.
+      selector:
+        action:
+
+variables:
+
+  exclude: !input 'exclude'
+  selector: !input 'selector'
+  time1: !input 'time1'
+  time2: !input 'time2'
+  time3: !input 'time3'
+  time4: !input 'time4'
+  time5: !input 'time5'
+  entities_list: "{{ selector.replace(' ', '').split(',') }}"
+
+  entities: >-  
+    {% set result = namespace(entities=[]) %}
+    {% for item in entities_list %}
+      {% for state in states | selectattr('state', 'match', 'unavailable') | selectattr('entity_id', 'match', item)%}
+        {% if not state.entity_id in exclude.entity_id %}
+          {% set result.entities = result.entities + [state.name] %}
+        {% endif %}
+      {% endfor %}
+    {% endfor %}
+    {{"\n- "}}{{result.entities|join('\n- ')}}
+
+
+# Déclenchement aux heures spécifiées
+trigger:
+  - platform: time
+    at: !input 'time1'
+  - platform: time
+    at: !input 'time2'
+  - platform: time
+    at: !input 'time3'
+  - platform: time
+    at: !input 'time4'
+  - platform: time
+    at: !input 'time5'
+
+    
+# Ne pas afficher si expression vide
+condition:
+  - condition: template
+    value_template: "{{ entities | length > 5 }}"
+  - condition: template
+    value_template: "{{(now()) >= today_at('00:00:59')}}"
+
+
+# Actions : executer l'action définie en paramètre
+action:
+  - choose: []
+    default: !input 'actions'
+
+mode: single
+max_exceeded: silent
