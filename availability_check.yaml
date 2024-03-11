@@ -2,7 +2,7 @@ blueprint:
   name: Entity check
   description: Test de la disponibilité d'une entité Home Assistant
   domain: automation
-  source_url: https://github.com/argonaute199/availability_check/availability_check.yaml
+  source_url: https://github.com/argonaute199/availability-check/blob/main/availability_check.yaml
 
 
   # Entrées du blueprint
